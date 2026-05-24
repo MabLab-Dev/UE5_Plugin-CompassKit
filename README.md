@@ -1,2 +1,5 @@
 # [UE5 Plugin] CompassKit
-A simple and extensible compass with markers.
+
+CompassKit is a modular compass and navigation marker system for Unreal Engine 5.
+
+It supports dynamic runtime markers, moving actor tracking, cardinal directions, and blueprint-friendly workflows while remaining lightweight and extensible.
