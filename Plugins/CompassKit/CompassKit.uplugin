@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "CompassKit",
+	"Description": "A simple and extensible compass with markers.",
+	"Category": "Gameplay",
+	"CreatedBy": "MabLab",
+	"CreatedByURL": "",
+	"DocsURL": "https://github.com/MabLab-Dev/-UE5-Plugin-CompassKit",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/MabLab-Dev/-UE5-Plugin-CompassKit/issues",
+	"EngineVersion": "5.7.0",
+	"CanContainContent": true,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "CompassKit",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
