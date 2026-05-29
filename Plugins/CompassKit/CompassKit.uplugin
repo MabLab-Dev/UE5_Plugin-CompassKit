@@ -7,9 +7,9 @@
 	"Category": "Gameplay",
 	"CreatedBy": "MabLab",
 	"CreatedByURL": "",
-	"DocsURL": "https://github.com/MabLab-Dev/-UE5-Plugin-CompassKit",
+	"DocsURL": "https://github.com/MabLab-Dev/UE5_Plugin-CompassKit",
 	"MarketplaceURL": "",
-	"SupportURL": "https://github.com/MabLab-Dev/-UE5-Plugin-CompassKit/issues",
+	"SupportURL": "https://github.com/MabLab-Dev/UE5_Plugin-CompassKit/issues",
 	"EngineVersion": "5.7.0",
 	"CanContainContent": true,
 	"Installed": true,
@@ -19,5 +19,7 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
-	]
+	],
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false
 }
