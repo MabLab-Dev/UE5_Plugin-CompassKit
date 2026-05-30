@@ -1,4 +1,4 @@
-# [UE5 Plugin] CompassKit
+# `UE5 Plugin` CompassKit
 
 CompassKit is an Unreal Engine 5 plugin that provides an in-game compass and navigation marker system for tracking objectives, actors, and directions at runtime.
 
