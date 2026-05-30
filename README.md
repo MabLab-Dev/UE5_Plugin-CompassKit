@@ -5,7 +5,7 @@ CompassKit is an Unreal Engine 5 plugin that provides an in-game compass and nav
 It supports dynamic actor tracking, cardinal direction markers, and widget-agnostic navigation workflows while remaining lightweight, extensible, and blueprint-friendly.
 
 > [!NOTE]
-> CompassKit is designed as a widget-agnostic navigation system that manages marker state and provides runtime projection data for different navigation widget implementations.
+> CompassKit is designed to be a widget-agnostic navigation system that manages marker state and provides runtime projection data for different navigation widget implementations.
 >
 > The current release focuses on compass bar widgets, with future updates planned for screen-space indicators and additional navigation systems.
 
@@ -68,7 +68,7 @@ Track:
 Point markers are updated automatically at runtime.
 
 > [!NOTE]
-> Support for area-based markers is planned for future updates.
+> Support for area markers is planned for future updates.
 
 ## Projection Modes
 
@@ -133,7 +133,7 @@ These runtime query functions are designed to support custom navigation widgets 
 
 ### Marker Widget Interface
 
-CompassKit includes a marker widget interface to simplify communication between navigation widgets and marker widget implementations.
+CompassKit includes a `ICompassMarkerVisualInterface` for marker widgets, to simplify communication between a navigation widget and its marker widget implementations.
 
 Included interface functions:
 
@@ -145,7 +145,7 @@ This allows custom marker widgets to react to runtime marker data without tightl
 ## Notes
 
 - The markers are added/removed for a specific player hence are managed by a local player subsystem
-- The subsystem uses tick to continuously update marker positions, but tick is only active while markers are being tracked and navigation widgets are subscribed.
+- The subsystem uses tick to continuously update marker positions, but tick is only active if a navigation widget is subscribed and there are markers to be tracked.
 - CompassKit is designed to encourage custom navigation widget implementations.
 
 ## Installation
@@ -153,14 +153,14 @@ This allows custom marker widgets to react to runtime marker data without tightl
 1. Copy the plugin into your project's `Plugins` folder
 2. Enable the plugin in Unreal Engine
 3. Restart the editor
-4. Open the example map or integrate the subsystem into your own project
+4. Play the example map `Lvl_CompassKitTest`
 
 ## Requirements
 
 - Unreal Engine 5.7
 
 > [!NOTE]
-> The initial release currently targets Unreal Engine 5.7 only. Backward compatibility for earlier UE5 versions will be added in future updates.
+> This initial release targets Unreal Engine 5.7 only. Backward compatibility for earlier UE5 versions will be added in future updates.
 
 ## License
 
