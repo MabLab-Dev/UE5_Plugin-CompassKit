@@ -4,6 +4,8 @@ CompassKit is an Unreal Engine 5 plugin that provides an in-game compass and nav
 
 It supports dynamic actor tracking, cardinal direction markers, and widget-agnostic navigation workflows while remaining lightweight, extensible, and blueprint-friendly.
 
+Check it out on [Fab](https://fab.com/s/c9ae4e18d1d7)
+
 > [!NOTE]
 > CompassKit is designed to be a widget-agnostic navigation system that manages marker state and provides runtime projection data for different navigation widget implementations.
 >
@@ -154,6 +156,10 @@ This allows custom marker widgets to react to runtime marker data without tightl
 2. Enable the plugin in Unreal Engine
 3. Restart the editor
 4. Play the example map `Lvl_CompassKitTest`
+
+   **OR**
+
+   Install it from [Fab](https://fab.com/s/c9ae4e18d1d7)
 
 ## Requirements
 
