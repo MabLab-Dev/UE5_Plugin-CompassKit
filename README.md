@@ -153,11 +153,14 @@ This allows custom marker widgets to react to runtime marker data without tightl
 ## Installation
 
 1. Install CompassKit using one of the following methods:
-   - Install from [Fab](https://fab.com/s/c9ae4e18d1d7) to make it available to all projects in your engine installation (Engine Plugin)
-   - Copy the plugin into your project's `Plugins` folder to make it available only to that project (Project Plugin)
+   * Install from [Fab](https://fab.com/s/c9ae4e18d1d7) to make it available to all projects in your engine installation (Engine Plugin)
+   * Copy the plugin into your project's `Plugins` folder to make it available only to that project (Project Plugin)
 2. Enable CompassKit under `Edit → Plugins`
 3. Restart the editor
-4. Open the example map `Lvl_CompassKitTest`
+4. To access the included example content:
+   * Engine Plugin: Enable `Show Plugin Content` and `Show Engine Content` in the Content Browser
+   * Project Plugin: Enable `Show Plugin Content`
+5. Open the example map `Lvl_CompassKitTest`
 
 ## Requirements
 
