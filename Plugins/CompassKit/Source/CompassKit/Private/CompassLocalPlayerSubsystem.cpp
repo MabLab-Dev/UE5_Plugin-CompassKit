@@ -1,5 +1,4 @@
-// Copyright MabLab. All Rights Reserved.
-
+// Copyright MabLab 2026. All Rights Reserved.
 
 #include "CompassLocalPlayerSubsystem.h"
 #include "GameFramework/Pawn.h"
