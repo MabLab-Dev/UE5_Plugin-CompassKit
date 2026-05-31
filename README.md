@@ -152,14 +152,12 @@ This allows custom marker widgets to react to runtime marker data without tightl
 
 ## Installation
 
-1. Copy the plugin into your project's `Plugins` folder
-2. Enable the plugin in Unreal Engine
+1. Install CompassKit using one of the following methods:
+   - Install from [Fab](https://fab.com/s/c9ae4e18d1d7) to make it available to all projects in your engine installation (Engine Plugin)
+   - Copy the plugin into your project's `Plugins` folder to make it available only to that project (Project Plugin)
+2. Enable CompassKit under `Edit → Plugins`
 3. Restart the editor
-4. Play the example map `Lvl_CompassKitTest`
-
-   **OR**
-
-   Install it from [Fab](https://fab.com/s/c9ae4e18d1d7)
+4. Open the example map `Lvl_CompassKitTest`
 
 ## Requirements
 
