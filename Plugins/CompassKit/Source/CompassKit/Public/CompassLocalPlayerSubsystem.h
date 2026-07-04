@@ -18,7 +18,7 @@ class UUserWidget; // Navigation widgets (CompassBar, ScreenView, Minimap)
 UCLASS()
 class COMPASSKIT_API UCompassLocalPlayerSubsystem : public ULocalPlayerSubsystem, public FTickableGameObject
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
     /* -------------------- Delegates -------------------- */
@@ -69,6 +69,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "CompassKit|Runtime")
     bool IsMarkerWithinView(const FGuid& MarkerId, float ViewHalfAngle) const;
 
+    /* -------------------- Projection Reference -------------------- */
+
+    UFUNCTION(BlueprintCallable, Category = "CompassKit|Projection Reference")
+    void SetProjectionReferenceActor(AActor* Actor);
+
+    UFUNCTION(BlueprintCallable, Category = "CompassKit|Projection Reference")
+    void ClearProjectionReferenceActor();
+
     /* -------------------- Widget Subscription -------------------- */
 
     // Register a navigation widget (CompassBar, ScreenView, Minimap)
@@ -80,7 +88,7 @@ public:
 
     /* -------------------- Math -------------------- */
 
-    static FRelativeOffsetResult CompareRelativeOffsets(const FTransform& TransformA, const FTransform& TransformB, bool bTransformBAtInfinity);
+    static FRelativeNavigationResult CalculateRelativeNavigation(const FTransform& ReferenceTransform, const FCompassMarkerData& MarkerData);
 
 protected:
     /* -------------------- Internal State -------------------- */
@@ -93,12 +101,15 @@ protected:
 
     TMap<FGuid, FCompassRuntimeCache> RuntimeCache;
 
+    UPROPERTY()
+    TWeakObjectPtr<AActor> ProjectionReferenceActor;
+
     /* -------------------- Tick -------------------- */
 
     virtual void Tick(float DeltaTime) override;
     virtual bool IsTickable() const override;
     virtual TStatId GetStatId() const override;
-    virtual UWorld* GetTickableGameObjectWorld() const override;	
+    virtual UWorld* GetTickableGameObjectWorld() const override;
 
 private:
     /* -------------------- Subscription Helpers -------------------- */
@@ -110,8 +121,6 @@ private:
     void RebroadcastExistingMarkers();
 
     /* -------------------- Helper Resolvers -------------------- */
-    FTransform GetPlayerCameraTransform() const;
-    FTransform GetPlayerControllerTransform() const;
+    FTransform ResolveProjectionReferenceTransform() const;
     FVector    GetPlayerPawnLocation() const;
-    FTransform ResolveMarkerTransform(const FCompassMarkerData& MarkerData) const;
 };

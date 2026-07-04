@@ -122,7 +122,7 @@ struct FCompassRuntimeCache
     }
 };
 
-struct FRelativeOffsetResult
+struct FRelativeNavigationResult
 {
     float HorizontalOffset = 0.f;
     float VerticalOffset = 0.f;

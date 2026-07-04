@@ -97,25 +97,25 @@ float UCompassLocalPlayerSubsystem::GetMarkerProjectedOffset(const FGuid& Marker
 
     switch (CompassProjectionType)
     {
-        case ECompassProjectionType::Perspective_3D:
+    case ECompassProjectionType::Perspective_3D:
+    {
+        // Dot product projection (3D perspective mode)
+        return Cache->DirectionalOffset.X;
+    }
+
+    case ECompassProjectionType::Flat_2D:
+    {
+        // Angular projection
+        if (ViewHalfAngle <= UE_KINDA_SMALL_NUMBER)
         {
-            // Dot product projection (3D perspective mode)
-            return Cache->DirectionalOffset.X;
-        }
-
-        case ECompassProjectionType::Flat_2D:
-        {
-            // Angular projection
-            if (ViewHalfAngle <= UE_KINDA_SMALL_NUMBER)
-            {
-                return 0.f;
-            }
-
-            return Cache->SignedAngle / ViewHalfAngle;
-        }
-
-        default:
             return 0.f;
+        }
+
+        return Cache->SignedAngle / ViewHalfAngle;
+    }
+
+    default:
+        return 0.f;
     }
 }
 
@@ -135,6 +135,16 @@ bool UCompassLocalPlayerSubsystem::IsMarkerWithinView(const FGuid& MarkerId, flo
     const float NormalizedAngle = Cache->SignedAngle / ViewHalfAngle;
 
     return FMath::Abs(NormalizedAngle) <= 1.f;
+}
+
+void UCompassLocalPlayerSubsystem::SetProjectionReferenceActor(AActor* Actor)
+{
+    ProjectionReferenceActor = Actor;
+}
+
+void UCompassLocalPlayerSubsystem::ClearProjectionReferenceActor()
+{
+    ProjectionReferenceActor.Reset();
 }
 
 void UCompassLocalPlayerSubsystem::SubscribeNavigationWidget(UUserWidget* NavigationWidget)
@@ -158,39 +168,63 @@ void UCompassLocalPlayerSubsystem::UnsubscribeNavigationWidget(UUserWidget* Navi
     }
 }
 
-FRelativeOffsetResult UCompassLocalPlayerSubsystem::CompareRelativeOffsets(const FTransform& TransformA, const FTransform& TransformB, bool bTransformBAtInfinity)
+FRelativeNavigationResult UCompassLocalPlayerSubsystem::CalculateRelativeNavigation(const FTransform& ReferenceTransform, const FCompassMarkerData& MarkerData)
 {
-    FRelativeOffsetResult Result;
+    FRelativeNavigationResult Result;
 
-    const FVector ForwardA = TransformA.GetRotation().GetForwardVector();
-    const FVector RightA = TransformA.GetRotation().GetRightVector();
-    const FVector UpA = TransformA.GetRotation().GetUpVector();
+    const FVector Forward = ReferenceTransform.GetRotation().GetForwardVector();
+    const FVector Right = ReferenceTransform.GetRotation().GetRightVector();
+    const FVector Up = ReferenceTransform.GetRotation().GetUpVector();
 
-    FVector DirectionToB;
+    FVector DirectionToTarget = FVector::ForwardVector;
     float Distance = 0.f;
 
-    if (bTransformBAtInfinity)
+    switch (MarkerData.MarkerType)
     {
-        // Cardinal-style marker (direction only)
-        DirectionToB = TransformB.GetRotation().GetForwardVector();
-        Distance = 0.f;
+    case ECompassMarkerType::Cardinal:
+    {
+        DirectionToTarget = FRotator(0.f, MarkerData.Direction, 0.f).Vector();
+
+        break;
     }
-    else
+    case ECompassMarkerType::Point:
     {
-        // World-space marker
-        const FVector ABVector = TransformB.GetLocation() - TransformA.GetLocation();
-        Distance = ABVector.Size();
-        DirectionToB = ABVector.GetSafeNormal();
+        FVector TargetLocation = MarkerData.TargetActor.IsValid() ? MarkerData.TargetActor->GetActorLocation() : MarkerData.WorldLocation;
+
+        const FVector ToTarget = (TargetLocation - ReferenceTransform.GetLocation());
+        DirectionToTarget = ToTarget.GetSafeNormal();
+        Distance = ToTarget.Size();
+
+        break;
+    }
+    /*
+    case ECompassMarkerType::Circle:
+    {
+
+    }
+
+    case ECompassMarkerType::Box:
+    {
+
+    }
+    */
+    default:
+        break;
     }
 
     // ----------------------------
     // Signed angle (yaw)
     // ----------------------------
-    const float ForwardDot = FVector::DotProduct(ForwardA, DirectionToB);
-    const FVector Cross = FVector::CrossProduct(ForwardA, DirectionToB);
+
+    // Flatten vectors onto the horizontal plane so the signed angle is unaffected by camera pitch.
+    const FVector FlatForward = FVector::VectorPlaneProject(Forward, FVector::UpVector).GetSafeNormal();
+    const FVector FlatDirection = FVector::VectorPlaneProject(DirectionToTarget, FVector::UpVector).GetSafeNormal();
+
+    const float ForwardDot = FVector::DotProduct(FlatForward, FlatDirection);
+    const FVector Cross = FVector::CrossProduct(FlatForward, FlatDirection);
 
     const float AngleRadians = FMath::Atan2(
-        FVector::DotProduct(Cross, UpA),
+        Cross.Z,
         ForwardDot
     );
 
@@ -199,12 +233,12 @@ FRelativeOffsetResult UCompassLocalPlayerSubsystem::CompareRelativeOffsets(const
     // ----------------------------
     // Horizontal offset
     // ----------------------------
-    Result.HorizontalOffset = FVector::DotProduct(RightA, DirectionToB);
+    Result.HorizontalOffset = FVector::DotProduct(Right, DirectionToTarget);
 
     // ----------------------------
     // Vertical offset (for screen markers later)
     // ----------------------------
-    Result.VerticalOffset = FVector::DotProduct(UpA, DirectionToB);
+    Result.VerticalOffset = FVector::DotProduct(Up, DirectionToTarget);
 
     // ----------------------------
     // Distance
@@ -229,10 +263,9 @@ void UCompassLocalPlayerSubsystem::Tick(float DeltaTime)
         return;
     }
 
-    // Step 4: Prepare player reference transforms
-    const FTransform CameraTransform = GetPlayerCameraTransform();
-    const FTransform ControllerTransform = GetPlayerControllerTransform();
-    const FVector    PawnLocation = GetPlayerPawnLocation();
+    // Step 4: Prepare player reference data
+    const FTransform ProjectionReferenceTransform = ResolveProjectionReferenceTransform();
+    const FVector PawnLocation = GetPlayerPawnLocation();
 
     // Step 5: Iterate over all markers in the registry
     for (auto& Pair : MarkerRegistry)
@@ -240,36 +273,29 @@ void UCompassLocalPlayerSubsystem::Tick(float DeltaTime)
         const FGuid MarkerId = Pair.Key;
         const FCompassMarkerData& MarkerData = Pair.Value;
 
-        // Resolve marker transform depending on type
-        const FTransform MarkerTransform = ResolveMarkerTransform(MarkerData);
+        // Calculate relative navigation data for this marker
+        const FRelativeNavigationResult NavigationResult = CalculateRelativeNavigation(ProjectionReferenceTransform, MarkerData);
 
-        const bool bIsCardinal = (MarkerData.MarkerType == ECompassMarkerType::Cardinal);
-
-        const FTransform& ReferenceTransform = bIsCardinal ? ControllerTransform : CameraTransform;
-
-        //Cardinal markers only care about rotation while world markers also care about position
-        FRelativeOffsetResult OffsetData = CompareRelativeOffsets(ReferenceTransform, MarkerTransform, bIsCardinal);
-
-        float Distance = 0.f;
+        float PawnDistance = 0.f;
         if (MarkerData.MarkerType == ECompassMarkerType::Point)
         {
-            //This distance value is different from the one in CompareRelativeOffsets() as this has pawn location as reference rather than camera location
+            //Distance of the pawn may be different from what you get from CalculateRelativeNavigation(), as that is taken from the camera by default
             if (MarkerData.TargetActor.IsValid())
             {
-                Distance = FVector::Dist(PawnLocation, MarkerData.TargetActor->GetActorLocation());
+                PawnDistance = FVector::Dist(PawnLocation, MarkerData.TargetActor->GetActorLocation());
             }
             else
             {
-                Distance = FVector::Dist(PawnLocation, MarkerTransform.GetLocation());
+                PawnDistance = FVector::Dist(PawnLocation, MarkerData.WorldLocation);
             }
         }
 
-        FVector2D DirectionalOffset(OffsetData.HorizontalOffset, OffsetData.VerticalOffset);
+        FVector2D DirectionalOffset(NavigationResult.HorizontalOffset, NavigationResult.VerticalOffset);
 
-        float SignedAngle = OffsetData.SignedAngleDegrees;
+        float SignedAngle = NavigationResult.SignedAngleDegrees;
 
         // Step 6: Populate runtime cache
-        RuntimeCache.Add(MarkerId, FCompassRuntimeCache(Distance, SignedAngle, DirectionalOffset));
+        RuntimeCache.Add(MarkerId, FCompassRuntimeCache(PawnDistance, SignedAngle, DirectionalOffset));
     }
 }
 
@@ -341,8 +367,13 @@ void UCompassLocalPlayerSubsystem::RebroadcastExistingMarkers()
     }
 }
 
-FTransform UCompassLocalPlayerSubsystem::GetPlayerCameraTransform() const
+FTransform UCompassLocalPlayerSubsystem::ResolveProjectionReferenceTransform() const
 {
+    if (ProjectionReferenceActor.IsValid())
+    {
+        return ProjectionReferenceActor->GetActorTransform();
+    }
+
     if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
     {
         if (APlayerController* PC = LocalPlayer->GetPlayerController(GetWorld()))
@@ -353,20 +384,7 @@ FTransform UCompassLocalPlayerSubsystem::GetPlayerCameraTransform() const
             }
         }
     }
-    return FTransform::Identity;
-}
 
-FTransform UCompassLocalPlayerSubsystem::GetPlayerControllerTransform() const
-{
-    if (ULocalPlayer* LocalPlayer = GetLocalPlayer())
-    {
-        if (APlayerController* PC = LocalPlayer->GetPlayerController(GetWorld()))
-        {
-            // Build a transform from control rotation only, ignore location
-            const FRotator ControlRot = PC->GetControlRotation();
-            return FTransform(ControlRot, FVector::ZeroVector);
-        }
-    }
     return FTransform::Identity;
 }
 
@@ -383,40 +401,4 @@ FVector UCompassLocalPlayerSubsystem::GetPlayerPawnLocation() const
         }
     }
     return FVector::ZeroVector;
-}
-
-FTransform UCompassLocalPlayerSubsystem::ResolveMarkerTransform(const FCompassMarkerData& MarkerData) const
-{
-    switch (MarkerData.MarkerType)
-    {
-    case ECompassMarkerType::Cardinal:
-    {
-        FRotator Rot(0.f, MarkerData.Direction, 0.f);
-        return FTransform(Rot, FVector::ZeroVector);
-    }
-
-    case ECompassMarkerType::Point:
-    {
-        // Point markers: prefer actor reference if valid
-        if (MarkerData.TargetActor.IsValid())
-        {
-            return MarkerData.TargetActor->GetActorTransform();
-        }
-        // Fallback to static world location
-        return FTransform(FRotator::ZeroRotator, MarkerData.WorldLocation);
-    }
-/*
-    case ECompassMarkerType::Circle:
-    {
-        return FTransform(FRotator::ZeroRotator, MarkerData.AreaCenter);
-    }
-
-    case ECompassMarkerType::Box:
-    {
-        return FTransform(FRotator::ZeroRotator, MarkerData.BoxCenter);
-    }
-*/
-    default:
-        return FTransform::Identity;
-    }
 }
