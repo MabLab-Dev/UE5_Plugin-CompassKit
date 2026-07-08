@@ -72,10 +72,10 @@ public:
     /* -------------------- Projection Reference -------------------- */
 
     UFUNCTION(BlueprintCallable, Category = "CompassKit|Projection Reference")
-    void SetProjectionReferenceActor(AActor* Actor);
+    void SetProjectionReferenceOverride(AActor* Actor);
 
     UFUNCTION(BlueprintCallable, Category = "CompassKit|Projection Reference")
-    void ClearProjectionReferenceActor();
+    void ResetProjectionReferenceOverride();
 
     /* -------------------- Widget Subscription -------------------- */
 

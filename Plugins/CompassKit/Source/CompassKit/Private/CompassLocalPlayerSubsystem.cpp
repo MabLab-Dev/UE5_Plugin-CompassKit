@@ -137,12 +137,12 @@ bool UCompassLocalPlayerSubsystem::IsMarkerWithinView(const FGuid& MarkerId, flo
     return FMath::Abs(NormalizedAngle) <= 1.f;
 }
 
-void UCompassLocalPlayerSubsystem::SetProjectionReferenceActor(AActor* Actor)
+void UCompassLocalPlayerSubsystem::SetProjectionReferenceOverride(AActor* Actor)
 {
     ProjectionReferenceActor = Actor;
 }
 
-void UCompassLocalPlayerSubsystem::ClearProjectionReferenceActor()
+void UCompassLocalPlayerSubsystem::ResetProjectionReferenceOverride()
 {
     ProjectionReferenceActor.Reset();
 }
