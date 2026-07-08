@@ -148,7 +148,7 @@ This allows custom marker widgets to react to runtime marker data without tightl
 
 - The markers are added/removed for a specific player hence are managed by a local player subsystem
 - The subsystem uses tick to continuously update marker positions, but tick is only active if a navigation widget is subscribed and there are markers to be tracked.
-- By default CompassKit calculates marker projections relative to the player's camera. Projects can optionally override this at runtime using SetProjectionReferenceActor().
+- By default CompassKit calculates marker projections relative to the player's camera. Projects can optionally override this at runtime using SetProjectionReferenceOverride().
 - CompassKit is designed to encourage custom navigation widget implementations.
 
 ## Installation
